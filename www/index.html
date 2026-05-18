@@ -1,21 +1,32 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Portal Curupira WebRadio</title>
-<link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portal Curupira WebRadio</title>
+  <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
 
-<h1>🎙 Portal Curupira WebRadio</h1>
+  <div class="app">
+    <h1>🎙 Portal Curupira WebRadio</h1>
 
-<audio id="player" controls></audio>
+    <div class="player-card">
+      <div id="nowPlaying" class="now-playing">
+        Nenhuma música carregada
+      </div>
 
-<button onclick="playMusic()">▶ Tocar Música</button>
+      <audio id="player"></audio>
 
-<script src="app.js"></script>
+      <div class="controls">
+        <button id="prevBtn">⏮ Anterior</button>
+        <button id="playBtn">▶ Play</button>
+        <button id="pauseBtn">⏸ Pause</button>
+        <button id="nextBtn">⏭ Próxima</button>
+      </div>
+    </div>
+  </div>
 
+  <script src="app.js"></script>
 </body>
 </html>

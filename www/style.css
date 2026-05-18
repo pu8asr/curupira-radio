@@ -1,22 +1,41 @@
 body{
-margin:0;
-padding:0;
-background:#111;
-color:#fff;
-font-family:Arial;
+  margin:0;
+  padding:0;
+  background:#111;
+  color:#fff;
+  font-family:Arial, sans-serif;
 }
 
 .app{
-padding:20px;
+  padding:20px;
+}
+
+.player-card{
+  background:#1c1c1c;
+  padding:20px;
+  border-radius:16px;
+  margin-top:20px;
+}
+
+.now-playing{
+  margin-bottom:20px;
+  font-size:16px;
+  font-weight:bold;
+}
+
+.controls{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
 }
 
 button{
-width:100%;
-padding:20px;
-margin-top:15px;
-border:none;
-border-radius:12px;
-font-size:18px;
-background:#1e88e5;
-color:white;
+  flex:1;
+  min-width:120px;
+  padding:16px;
+  border:none;
+  border-radius:12px;
+  font-size:16px;
+  background:#1e88e5;
+  color:white;
 }
