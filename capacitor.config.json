@@ -1,0 +1,6 @@
+{
+  "appId": "br.com.curupira.radio",
+  "appName": "Portal Curupira WebRadio",
+  "webDir": "www",
+  "bundledWebRuntime": false
+}

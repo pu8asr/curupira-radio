@@ -1,0 +1,26 @@
+{
+  "name": "curupira-radio",
+  "version": "1.0.0",
+  "description": "Radio App Híbrido Android",
+  "main": "index.js",
+  "scripts": {
+    "build": "echo 'Build web ok'",
+    "cap:init": "cap init",
+    "cap:add:android": "cap add android",
+    "cap:sync": "cap sync",
+    "cap:open:android": "cap open android"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@capacitor/core": "^8.3.4"
+  },
+  "devDependencies": {
+    "@capacitor/android": "^8.3.4",
+    "@capacitor/cli": "^8.3.4",
+    "@types/node": "^25.8.0",
+    "typescript": "^6.0.3"
+  }
+}
