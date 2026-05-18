@@ -8,6 +8,9 @@ let ICECAST = {
   password: ""
 };
 
+// URL do encoder PHP na Hostinger
+const ENCODER_URL = "https://encoder.portalcurupira.com.br/";
+
 function loadConfig() {
   const saved = localStorage.getItem("curupira_config");
   if (saved) {
@@ -159,9 +162,10 @@ let isPlaying = false;
 let isBroadcasting = false;
 let isMicOn = false;
 let currentTrackName = "Nenhuma música";
-let playMode = "sequential"; // "sequential" ou "random"
-let inactivityTimer = null; // Timer de inatividade
+let playMode = "sequential";
+let inactivityTimer = null;
 const INACTIVITY_TIMEOUT = 60000; // 1 minuto
+let broadcastInterval = null;
 
 /* =========================
    ELEMENTOS
@@ -273,13 +277,11 @@ function fadeIn(duration = 2000) {
    INACTIVITY TIMER
 ========================= */
 function resetInactivityTimer() {
-  // Limpa timer existente
   if (inactivityTimer) {
     clearTimeout(inactivityTimer);
     inactivityTimer = null;
   }
   
-  // Se está transmitindo e não está tocando música
   if (isBroadcasting && !isPlaying && !isMicOn) {
     inactivityTimer = setTimeout(() => {
       console.log("⏰ Timeout de inatividade - encerrando transmissão");
@@ -290,13 +292,11 @@ function resetInactivityTimer() {
 }
 
 function stopBroadcast() {
-  if (mediaRecorder && mediaRecorder.state === 'recording') {
-    mediaRecorder.stop();
+  if (broadcastInterval) {
+    clearInterval(broadcastInterval);
+    broadcastInterval = null;
   }
-  if (wsConnection) {
-    wsConnection.close();
-    wsConnection = null;
-  }
+  
   isBroadcasting = false;
   btnBroadcast.textContent = "📡 Transmitir";
   btnBroadcast.classList.remove("active");
@@ -307,6 +307,11 @@ function stopBroadcast() {
     isMicOn = false;
     btnMic.textContent = "🎤 Mic Off";
     btnMic.classList.remove("active");
+  }
+  
+  if (inactivityTimer) {
+    clearTimeout(inactivityTimer);
+    inactivityTimer = null;
   }
   
   updateButtonsState();
@@ -575,13 +580,11 @@ function getNextIndex() {
   
   const unplayed = getUnplayedTracks();
   
-  // Se todas já foram tocadas
   if (unplayed.length === 0) {
-    return -1; // Sinaliza que acabou
+    return -1;
   }
   
   if (playMode === "sequential") {
-    // Próximo índice não tocado a partir do atual
     for (let i = 1; i <= playlist.length; i++) {
       const nextIdx = (index + i) % playlist.length;
       if (!playlist[nextIdx].played) {
@@ -589,7 +592,6 @@ function getNextIndex() {
       }
     }
   } else {
-    // Aleatório entre as não tocadas
     const randomUnplayed = unplayed[Math.floor(Math.random() * unplayed.length)];
     return randomUnplayed.index;
   }
@@ -602,8 +604,6 @@ function getNextIndex() {
 ========================= */
 function getPrevIndex() {
   if (playlist.length === 0) return 0;
-  
-  // Volta para a anterior na lista (cíclico)
   return (index - 1 + playlist.length) % playlist.length;
 }
 
@@ -616,7 +616,6 @@ async function togglePlay() {
     return;
   }
 
-  // Se todas já foram tocadas e estamos tentando dar play
   if (allTracksPlayed() && player.paused) {
     setStatus("⚠ Todas as músicas já foram reproduzidas");
     return;
@@ -681,12 +680,10 @@ async function stop() {
 async function next() {
   if (!playlist.length) return;
   
-  // Marca atual como tocada
   markAsPlayed(index);
   
   const nextIndex = getNextIndex();
   
-  // Se não há mais músicas não tocadas
   if (nextIndex === -1) {
     if (isPlaying) {
       await fadeOut(1500);
@@ -697,7 +694,6 @@ async function next() {
     progressBar.value = 0;
     currentTimeEl.textContent = "00:00";
     
-    // Encerra transmissão se estiver ativa
     if (isBroadcasting) {
       setStatus("⏹ Todas as músicas foram tocadas - Encerrando transmissão");
       stopBroadcast();
@@ -710,7 +706,6 @@ async function next() {
     return;
   }
   
-  // Fade out da atual
   if (isPlaying) {
     await fadeOut(1500);
     player.pause();
@@ -736,7 +731,6 @@ async function next() {
 async function prev() {
   if (!playlist.length) return;
   
-  // Se já passou 3 segundos, volta pro início da música atual
   if (player.currentTime > 3) {
     player.currentTime = 0;
     return;
@@ -917,14 +911,12 @@ function createPlaylistItem(t, i, showRemove) {
     ${showRemove ? '<button class="remove-track" data-index="' + i + '" title="Remover">✕</button>' : ''}
   `;
 
-  // Duplo clique para tocar (reseta o status played)
   el.addEventListener("click", (e) => {
     if (e.target.classList.contains("remove-track")) return;
     
     const now = Date.now();
     
     if (i === lastClickIndex && now - lastClickTime < 400) {
-      // Duplo clique: reseta o status e toca
       playlist[i].played = false;
       playTrack(i);
     } else {
@@ -1020,98 +1012,91 @@ async function toggleMic() {
 }
 
 /* =========================
-   BROADCAST
+   BROADCAST VIA HTTP POST
 ========================= */
-let wsConnection = null;
-let mediaRecorder = null;
-
 function startBroadcast() {
   if (playlist.length === 0) {
     setStatus("⚠ Adicione músicas primeiro");
     return;
   }
   
-  if (wsConnection && wsConnection.readyState === WebSocket.OPEN) {
+  // Se já está transmitindo, para
+  if (isBroadcasting) {
     stopBroadcast();
     setStatus("📡 Transmissão encerrada");
     return;
   }
 
-  try {
-    wsConnection = new WebSocket("ws://localhost:9001");
-
-    wsConnection.onopen = () => {
-      const bus = getStreamBus();
-      
-      if (!bus.stream.getAudioTracks().length) {
-        setStatus("❌ Sem áudio - toque algo primeiro");
-        return;
-      }
-
-      mediaRecorder = new MediaRecorder(bus.stream, {
-        mimeType: MediaRecorder.isTypeSupported('audio/webm;codecs=opus') 
-          ? 'audio/webm;codecs=opus' 
-          : 'audio/webm'
-      });
-
-      mediaRecorder.ondataavailable = (e) => {
-        if (e.data.size > 0 && wsConnection && wsConnection.readyState === WebSocket.OPEN) {
-          wsConnection.send(e.data);
-        }
-      };
-
-      mediaRecorder.start(1000);
-      isBroadcasting = true;
-      btnBroadcast.textContent = "📡 Transmitindo...";
-      btnBroadcast.classList.add("active");
-      updateButtonsState();
-      resetInactivityTimer();
-      setStatus("📡 AO VIVO - Transmitindo para Icecast");
-    };
-
-    wsConnection.onerror = (err) => {
-      console.error("WebSocket erro:", err);
-      setStatus("❌ Erro conexão - encoder rodando?");
-      isBroadcasting = false;
-      btnBroadcast.textContent = "📡 Transmitir";
-      btnBroadcast.classList.remove("active");
-      updateButtonsState();
-    };
-
-    wsConnection.onclose = () => {
-      if (mediaRecorder && mediaRecorder.state === 'recording') {
-        mediaRecorder.stop();
-      }
-      isBroadcasting = false;
-      btnBroadcast.textContent = "📡 Transmitir";
-      btnBroadcast.classList.remove("active");
-      
-      if (micStream) {
-        micStream.getTracks().forEach(t => t.stop());
-        micStream = null;
-        isMicOn = false;
-        btnMic.textContent = "🎤 Mic Off";
-        btnMic.classList.remove("active");
-      }
-      
-      updateButtonsState();
-      
-      if (inactivityTimer) {
-        clearTimeout(inactivityTimer);
-        inactivityTimer = null;
-      }
-      
-      if (wsConnection) {
-        setStatus("📡 Transmissão encerrada");
-      }
-      wsConnection = null;
-    };
-
-  } catch (err) {
-    console.error("Erro broadcast:", err);
-    setStatus("❌ Erro ao iniciar transmissão");
+  const bus = getStreamBus();
+  
+  if (!bus.stream.getAudioTracks().length) {
+    setStatus("❌ Sem áudio - toque algo primeiro");
+    return;
   }
+
+  // Cria MediaRecorder para capturar chunks
+  const mediaRecorder = new MediaRecorder(bus.stream, {
+    mimeType: MediaRecorder.isTypeSupported('audio/webm;codecs=opus') 
+      ? 'audio/webm;codecs=opus' 
+      : 'audio/webm'
+  });
+
+  mediaRecorder.ondataavailable = async (e) => {
+    if (e.data.size > 0 && isBroadcasting) {
+      try {
+        const response = await fetch(ENCODER_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/octet-stream',
+            'X-Icecast-Password': ICECAST.password,
+            'X-Icecast-Host': ICECAST.host,
+            'X-Icecast-Port': String(ICECAST.port),
+            'X-Icecast-Mount': ICECAST.mount
+          },
+          body: e.data
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error("Erro do encoder:", errorData);
+          if (response.status === 403 || response.status === 401) {
+            setStatus("❌ Senha do Icecast incorreta");
+          }
+        }
+      } catch (err) {
+        console.error("Erro ao enviar chunk:", err);
+      }
+    }
+  };
+
+  mediaRecorder.onerror = (err) => {
+    console.error("Erro MediaRecorder:", err);
+    setStatus("❌ Erro na captura de áudio");
+  };
+
+  // Inicia gravação e envio a cada 1 segundo
+  mediaRecorder.start(1000);
+  
+  isBroadcasting = true;
+  btnBroadcast.textContent = "📡 Transmitindo...";
+  btnBroadcast.classList.add("active");
+  updateButtonsState();
+  resetInactivityTimer();
+  setStatus("📡 AO VIVO - Transmitindo para Icecast");
+
+  // Guarda referência para parar depois
+  window._mediaRecorder = mediaRecorder;
 }
+
+// Sobrescreve stopBroadcast para parar o MediaRecorder também
+const originalStopBroadcast = stopBroadcast;
+stopBroadcast = function() {
+  if (window._mediaRecorder && window._mediaRecorder.state === 'recording') {
+    window._mediaRecorder.stop();
+  }
+  window._mediaRecorder = null;
+  originalStopBroadcast();
+};
 
 /* =========================
    PLAYER EVENTS
@@ -1127,14 +1112,12 @@ player.addEventListener('error', (e) => {
 });
 
 player.addEventListener('ended', () => {
-  // Música terminou naturalmente
   markAsPlayed(index);
   renderAllPlaylists();
   
   const nextIndex = getNextIndex();
   
   if (nextIndex === -1) {
-    // Todas as músicas foram tocadas
     isPlaying = false;
     updatePlayButton();
     progressBar.value = 0;
@@ -1150,7 +1133,6 @@ player.addEventListener('ended', () => {
     return;
   }
   
-  // Toca a próxima
   index = nextIndex;
   loadTrack();
   
