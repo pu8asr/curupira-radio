@@ -1,32 +1,76 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Portal Curupira WebRadio</title>
-  <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0">
+
+<title>Portal Curupira WebRadio</title>
+
+<link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
-  <div class="app">
-    <h1>🎙 Portal Curupira WebRadio</h1>
+<div class="app">
 
-    <div class="player-card">
-      <div id="nowPlaying" class="now-playing">
-        Nenhuma música carregada
-      </div>
+<h1>🎙 Portal Curupira WebRadio</h1>
 
-      <audio id="player"></audio>
+<div class="status" id="status">
+PRONTO
+</div>
 
-      <div class="controls">
-        <button id="prevBtn">⏮ Anterior</button>
-        <button id="playBtn">▶ Play</button>
-        <button id="pauseBtn">⏸ Pause</button>
-        <button id="nextBtn">⏭ Próxima</button>
-      </div>
-    </div>
-  </div>
+<div class="track-box">
+<div class="track-title" id="trackTitle">
+Nenhuma música carregada
+</div>
+</div>
 
-  <script src="app.js"></script>
+<audio id="player"></audio>
+
+<div class="controls">
+
+<button onclick="togglePlay()">
+▶ PLAY / ⏸ PAUSE
+</button>
+
+<button onclick="nextMusic()">
+⏭ PRÓXIMA
+</button>
+
+<button onclick="toggleMic()">
+🎤 MICROFONE
+</button>
+
+</div>
+
+<div class="volume-box">
+
+<h3>🎵 Volume Música</h3>
+
+<input
+type="range"
+min="0"
+max="1"
+step="0.01"
+value="1"
+id="musicVolume">
+
+<h3>🎤 Volume Microfone</h3>
+
+<input
+type="range"
+min="0"
+max="1"
+step="0.01"
+value="1"
+id="micVolume">
+
+</div>
+
+</div>
+
+<script src="app.js"></script>
+
 </body>
 </html>

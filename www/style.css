@@ -1,41 +1,56 @@
 body{
-  margin:0;
-  padding:0;
-  background:#111;
-  color:#fff;
-  font-family:Arial, sans-serif;
+margin:0;
+padding:0;
+background:#111;
+color:#fff;
+font-family:Arial,sans-serif;
 }
 
 .app{
-  padding:20px;
+padding:20px;
 }
 
-.player-card{
-  background:#1c1c1c;
-  padding:20px;
-  border-radius:16px;
-  margin-top:20px;
+h1{
+text-align:center;
 }
 
-.now-playing{
-  margin-bottom:20px;
-  font-size:16px;
-  font-weight:bold;
+.status{
+background:#1e88e5;
+padding:15px;
+border-radius:12px;
+text-align:center;
+margin-bottom:20px;
+font-weight:bold;
 }
 
-.controls{
-  display:flex;
-  flex-wrap:wrap;
-  gap:10px;
+.track-box{
+background:#222;
+padding:20px;
+border-radius:12px;
+margin-bottom:20px;
 }
 
-button{
-  flex:1;
-  min-width:120px;
-  padding:16px;
-  border:none;
-  border-radius:12px;
-  font-size:16px;
-  background:#1e88e5;
-  color:white;
+.track-title{
+font-size:18px;
+text-align:center;
+}
+
+.controls button{
+width:100%;
+padding:18px;
+margin-top:12px;
+border:none;
+border-radius:12px;
+font-size:18px;
+}
+
+.volume-box{
+margin-top:25px;
+background:#222;
+padding:20px;
+border-radius:12px;
+}
+
+input[type=range]{
+width:100%;
 }
