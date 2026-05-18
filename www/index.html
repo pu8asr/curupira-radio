@@ -2,71 +2,107 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport"
-content="width=device-width, initial-scale=1.0">
-
-<title>Portal Curupira WebRadio</title>
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Curupira Radio</title>
 <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-<div class="app">
-
-<h1>🎙 Portal Curupira WebRadio</h1>
-
-<div class="status" id="status">
-PRONTO
+<!-- NAV -->
+<div class="topbar">
+<button onclick="show('main')">🎙 Rádio</button>
+<button onclick="show('config')">⚙ Config</button>
 </div>
 
-<div class="track-box">
-<div class="track-title" id="trackTitle">
-Nenhuma música carregada
+<!-- ================= MAIN ================= -->
+<div id="main" class="screen">
+
+<div class="now-playing">
+<div class="cover-art">🎵</div>
+<h2 id="trackTitle">Nenhuma música</h2>
+<div class="status" id="status">PRONTO</div>
+</div>
+
+<audio id="player" preload="auto"></audio>
+
+<!-- Controles de transporte -->
+<div class="transport">
+<button onclick="prev()" class="btn-transport" title="Anterior">⏮</button>
+<button onclick="togglePlay()" id="btnPlayPause" class="btn-play-main" title="Play/Pause">▶</button>
+<button onclick="stop()" class="btn-transport" title="Parar">⏹</button>
+<button onclick="next()" class="btn-transport" title="Próxima">⏭</button>
+<button onclick="toggleMode()" id="btnMode" class="btn-mode mode-sequential" title="Modo: Sequencial">🔁</button>
+</div>
+
+<!-- Barra de progresso -->
+<div class="progress-container">
+<span id="currentTime">00:00</span>
+<input type="range" id="progressBar" class="progress-bar" min="0" max="100" value="0">
+<span id="duration">00:00</span>
+</div>
+
+<!-- Controles de volume e broadcast -->
+<div class="extra-controls">
+<div class="volume-control">
+<span>🔈</span>
+<input type="range" id="volumeSlider" class="volume-slider" min="0" max="100" value="100">
+<span>🔊</span>
+</div>
+<div class="broadcast-buttons">
+<button onclick="toggleMic()" id="btnMic" class="btn-action" disabled>🎤 Mic Off</button>
+<button onclick="startBroadcast()" id="btnBroadcast" class="btn-action" disabled>📡 Transmitir</button>
 </div>
 </div>
 
-<audio id="player"></audio>
-
-<div class="controls">
-
-<button onclick="togglePlay()">
-▶ PLAY / ⏸ PAUSE
-</button>
-
-<button onclick="nextMusic()">
-⏭ PRÓXIMA
-</button>
-
-<button onclick="toggleMic()">
-🎤 MICROFONE
-</button>
+<!-- Playlist na tela principal -->
+<div class="main-playlist">
+<h3>📋 Playlist <span id="playlistInfo"></span></h3>
+<div id="mainPlaylist" class="playlist-container"></div>
+</div>
 
 </div>
 
-<div class="volume-box">
+<!-- ================= CONFIG ================= -->
+<div id="config" class="screen hidden">
 
-<h3>🎵 Volume Música</h3>
+<h3>⚙ Configuração do Servidor</h3>
 
-<input
-type="range"
-min="0"
-max="1"
-step="0.01"
-value="1"
-id="musicVolume">
-
-<h3>🎤 Volume Microfone</h3>
-
-<input
-type="range"
-min="0"
-max="1"
-step="0.01"
-value="1"
-id="micVolume">
-
+<div class="config-group">
+<label>Servidor Icecast</label>
+<input id="host" disabled placeholder="s01.brascast.com">
 </div>
+
+<div class="config-group">
+<label>Porta</label>
+<input id="port" disabled placeholder="31112">
+</div>
+
+<div class="config-group">
+<label>Mount Point</label>
+<input id="mount" disabled placeholder="/live">
+</div>
+
+<div class="config-group">
+<label>Senha do Encoder</label>
+<input id="password" type="password" placeholder="Digite a senha">
+</div>
+
+<hr>
+
+<h3>📁 Músicas</h3>
+<div class="file-upload">
+<input type="file" id="fileInput" multiple accept="audio/*" onchange="loadFiles()">
+<label for="fileInput" class="file-label">📂 Escolher arquivos de áudio</label>
+</div>
+
+<div id="playlist" class="playlist-container"></div>
+
+<div class="playlist-actions">
+<button onclick="clearPlaylist()" class="btn-clear">🗑 Limpar Playlist</button>
+</div>
+
+<button onclick="saveConfig()" class="btn-save">💾 Salvar e Voltar</button>
 
 </div>
 
